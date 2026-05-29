@@ -982,6 +982,15 @@ body[data-skin="galaxy"] .chip.on {
   border-radius: 18px;
   background: linear-gradient(135deg, rgba(255,255,255,.94), rgba(240,249,255,.88));
   box-shadow: 0 8px 22px rgba(15, 23, 42, .06);
+  cursor: pointer;
+  text-align: left;
+}
+.notice-card:active {
+  transform: scale(.992);
+}
+.notice-card:focus-visible {
+  outline: 3px solid rgba(26,115,232,.28);
+  outline-offset: 2px;
 }
 .notice-card::before {
   content: '';
@@ -1022,6 +1031,10 @@ body[data-skin="galaxy"] .chip.on {
   line-height: 1.35;
   word-break: keep-all;
   overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .notice-card p {
   margin: 5px 0 0;
@@ -1031,6 +1044,10 @@ body[data-skin="galaxy"] .chip.on {
   line-height: 1.45;
   word-break: normal;
   overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 @media(min-width:700px) {
   .notice-card-list {
@@ -1056,6 +1073,85 @@ body[data-skin="galaxy"] .chip.on {
 }
 .notice-more-btn:active {
   transform: scale(.97);
+}
+.notice-modal[hidden] {
+  display: none;
+}
+.notice-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+.notice-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, .46);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.notice-modal-panel {
+  position: relative;
+  width: min(calc(100vw - 32px), 520px);
+  max-height: min(76vh, 680px);
+  overflow: auto;
+  padding: 18px;
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .25);
+}
+.notice-modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, .12);
+}
+.notice-modal-close:active {
+  transform: scale(.96);
+}
+.notice-modal-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 42px;
+  margin-bottom: 10px;
+}
+.notice-modal-date {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+.notice-modal-title {
+  margin: 0;
+  padding-right: 36px;
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.35;
+  font-weight: 950;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.notice-modal-body {
+  margin-top: 12px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-line;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 
@@ -1130,6 +1226,15 @@ body[data-skin="galaxy"] .chip.on {
   </section>
 </div>
 <button class="to-top" id="topBtn" type="button" aria-label="맨 위로">↑</button>
+<div class="notice-modal" id="noticeModal" role="dialog" aria-modal="true" aria-labelledby="noticeModalTitle" hidden>
+  <div class="notice-modal-backdrop" data-notice-close></div>
+  <article class="notice-modal-panel" tabindex="-1">
+    <button class="notice-modal-close" type="button" data-notice-close aria-label="공지 닫기">×</button>
+    <div class="notice-modal-meta"><span class="notice-badge" id="noticeModalType"></span><span class="notice-modal-date" id="noticeModalDate"></span></div>
+    <h2 class="notice-modal-title" id="noticeModalTitle"></h2>
+    <div class="notice-modal-body" id="noticeModalBody"></div>
+  </article>
+</div>
 <div class="toast" id="toast"></div>
 <script>
 // 🚨 모바일 인앱/파일 뷰어 정밀 디버깅용 전역 에러 리스너
@@ -1178,7 +1283,7 @@ function renderNotices() {
   var htmlArr = [];
   for(var i=0; i<limit; i++) {
     var n = NOTICE_DATA[i];
-    htmlArr.push('<article class="notice-card">');
+    htmlArr.push('<article class="notice-card" role="button" tabindex="0" data-notice-index="' + i + '" aria-label="공지 상세 보기: ' + esc(n.title) + '">');
     htmlArr.push('<div class="notice-card-head"><span class="notice-badge">' + esc(n.type) + '</span><time>' + esc(n.date) + '</time></div>');
     htmlArr.push('<strong>' + esc(n.title) + '</strong>');
     htmlArr.push('<p>' + esc(n.body) + '</p>');
@@ -1197,6 +1302,29 @@ function renderNotices() {
       btn.setAttribute('aria-expanded', 'true');
     }
   }
+}
+
+function openNoticeModal(index) {
+  var n = NOTICE_DATA[Number(index)];
+  var modal = $('noticeModal');
+  if(!n || !modal) return;
+  $('noticeModalType').textContent = n.type || '공지';
+  $('noticeModalDate').textContent = n.date || '';
+  $('noticeModalTitle').textContent = n.title || '';
+  $('noticeModalBody').textContent = n.body || '';
+  modal.hidden = false;
+  document.body.style.overflow = 'hidden';
+  setTimeout(function() {
+    var panel = modal.querySelector('.notice-modal-panel');
+    if(panel) panel.focus();
+  }, 0);
+}
+
+function closeNoticeModal() {
+  var modal = $('noticeModal');
+  if(!modal) return;
+  modal.hidden = true;
+  document.body.style.overflow = '';
 }
 
 
@@ -1546,11 +1674,42 @@ function copyText(text){
   showToast('복사했습니다');
 }
 
+function scrollToResults() {
+  var target = document.querySelector('.meta-row-container') || $('faqList');
+  if(!target) return;
+  setTimeout(function() {
+    var topbar = document.querySelector('.topbar');
+    var searchPanel = document.querySelector('.search-panel');
+    var offset = 12;
+    if(topbar) offset += topbar.getBoundingClientRect().height;
+    if(searchPanel) offset += searchPanel.getBoundingClientRect().height;
+    target.scrollIntoView({ block: 'start', behavior: 'auto' });
+    window.scrollBy({ top: -offset, behavior: 'auto' });
+  }, 80);
+}
+
+function submitSearch() {
+  state.query = $('searchInput').value;
+  state.visibleLimit = 25;
+  renderList();
+  if(state.query.trim()) {
+    scrollToResults();
+  }
+}
+
 function bind(){
   $('searchInput').addEventListener('input', function(e) {
     state.query = e.target.value;
     state.visibleLimit = 25;
     renderList();
+  });
+  $('searchInput').addEventListener('search', submitSearch);
+  $('searchInput').addEventListener('keydown', function(e) {
+    if(e.key === 'Enter') {
+      e.preventDefault();
+      submitSearch();
+      $('searchInput').blur();
+    }
   });
   
   $('clearBtn').addEventListener('click', function() {
@@ -1603,7 +1762,7 @@ function bind(){
     state.expanded = false;
     state.visibleLimit = 25;
     renderAll();
-    window.scrollTo({top:0,behavior:'smooth'});
+    scrollToResults();
   });
   
   $('expandToggle').addEventListener('click', function() {
@@ -1664,6 +1823,38 @@ function bind(){
       renderNotices();
     });
   }
+  if($('noticeList')) {
+    $('noticeList').addEventListener('click', function(e) {
+      var card = e.target;
+      while(card && card !== document.body) {
+        if(card.getAttribute && card.getAttribute('data-notice-index') !== null) break;
+        card = card.parentNode;
+      }
+      if(card && card !== document.body) {
+        openNoticeModal(card.getAttribute('data-notice-index'));
+      }
+    });
+    $('noticeList').addEventListener('keydown', function(e) {
+      if(e.key !== 'Enter' && e.key !== ' ') return;
+      var card = e.target;
+      if(card && card.getAttribute && card.getAttribute('data-notice-index') !== null) {
+        e.preventDefault();
+        openNoticeModal(card.getAttribute('data-notice-index'));
+      }
+    });
+  }
+  if($('noticeModal')) {
+    $('noticeModal').addEventListener('click', function(e) {
+      if(e.target && e.target.getAttribute && e.target.getAttribute('data-notice-close') !== null) {
+        closeNoticeModal();
+      }
+    });
+  }
+  document.addEventListener('keydown', function(e) {
+    if(e.key === 'Escape' && $('noticeModal') && !$('noticeModal').hidden) {
+      closeNoticeModal();
+    }
+  });
   if($('noticeToggleBtn')) {
     $('noticeToggleBtn').addEventListener('click', function() {
       noticeCollapsed = !noticeCollapsed;
