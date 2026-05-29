@@ -27,3 +27,15 @@ Read the latest relevant entries before substantial work. Append a concise entry
 - Next:
   - 실기기에서 검색 키보드 Enter 후 스크롤 위치를 한 번 확인할 것. GitHub Pages 파일 링크는 Pages 대역폭에 포함되는 것으로 안내함.
 
+## 2026-05-29 10:51 KST - Codex - 검색 결과 카드 자동 노출 보정
+
+- Summary:
+  - 검색 제출을 form submit으로 처리하고, 검색 후 공지사항/추천검색어를 숨겨 실제 FAQ 결과 카드가 바로 보이도록 보정함. 이동 대상도 첫 번째 FAQ 카드로 변경함.
+- Files:
+  - index.html
+  - AI_WORKLOG.md
+- Verification:
+  - 인라인 JS 문법 검사 통과; Chrome headless 390x844 검색 후 카드 노출 스크린샷 확인
+- Next:
+  - 동일 HTML을 로컬 Downloads의 FAQ 모바일 v4 파일에도 동기화함.
+
